@@ -188,14 +188,16 @@ export function hasFirebaseClientConfig(): boolean {
 
 export function hasFirebaseAdminConfig(): boolean {
   if (typeof window !== "undefined") return false;
-  const env = getServerEnv();
+  const serverEnv = getServerEnv();
+  const clientEnv = getClientEnv();
+  const projectId = serverEnv.FIREBASE_ADMIN_PROJECT_ID || clientEnv.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   return Boolean(
-    env.FIREBASE_ADMIN_PROJECT_ID &&
-    !env.FIREBASE_ADMIN_PROJECT_ID.startsWith("your-") &&
-    env.FIREBASE_ADMIN_CLIENT_EMAIL &&
-    !env.FIREBASE_ADMIN_CLIENT_EMAIL.startsWith("firebase-adminsdk-xxxxx") &&
-    env.FIREBASE_ADMIN_PRIVATE_KEY &&
-    !env.FIREBASE_ADMIN_PRIVATE_KEY.includes("YOUR_KEY")
+    projectId &&
+    !projectId.startsWith("your-") &&
+    serverEnv.FIREBASE_ADMIN_CLIENT_EMAIL &&
+    !serverEnv.FIREBASE_ADMIN_CLIENT_EMAIL.startsWith("firebase-adminsdk-xxxxx") &&
+    serverEnv.FIREBASE_ADMIN_PRIVATE_KEY &&
+    !serverEnv.FIREBASE_ADMIN_PRIVATE_KEY.includes("YOUR_KEY")
   );
 }
 

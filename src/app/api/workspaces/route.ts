@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { verifyAuthToken } from "@/lib/auth/verify-id-token";
 import { createWorkspaceSchema } from "@/lib/validation/workspace";
+import { hasFirebaseAdminConfig } from "@/lib/env";
 
 /**
  * POST /api/workspaces
@@ -32,6 +33,17 @@ export async function POST(req: NextRequest) {
           details: parseResult.error.flatten().fieldErrors,
         },
         { status: 400 }
+      );
+    }
+
+    if (!hasFirebaseAdminConfig()) {
+      return NextResponse.json(
+        {
+          error: "Firebase Admin credentials not configured.",
+          details:
+            "The server requires FIREBASE_ADMIN_CLIENT_EMAIL and FIREBASE_ADMIN_PRIVATE_KEY environment variables to connect to Firestore. Please configure them in your Vercel Project Settings.",
+        },
+        { status: 500 }
       );
     }
 
@@ -119,8 +131,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result.workspace, { status: 201 });
   } catch (error) {
     console.error("[SyncShelf API] Error creating workspace:", error);
+    const details =
+      error instanceof Error ? error.message : "Internal server error occurred while creating workspace.";
     return NextResponse.json(
-      { error: "Internal server error occurred while creating workspace." },
+      {
+        error: "Internal server error occurred while creating workspace.",
+        details,
+      },
       { status: 500 }
     );
   }
@@ -140,6 +157,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(
         { error: "Unauthorized: Invalid or missing authentication token" },
         { status: 401 }
+      );
+    }
+
+    if (!hasFirebaseAdminConfig()) {
+      return NextResponse.json(
+        {
+          error: "Firebase Admin credentials not configured.",
+          details:
+            "The server requires FIREBASE_ADMIN_CLIENT_EMAIL and FIREBASE_ADMIN_PRIVATE_KEY environment variables to connect to Firestore. Please configure them in your Vercel Project Settings.",
+        },
+        { status: 500 }
       );
     }
 
@@ -207,8 +235,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ workspaces }, { status: 200 });
   } catch (error) {
     console.error("[SyncShelf API] Error listing workspaces:", error);
+    const details =
+      error instanceof Error ? error.message : "Internal server error occurred while retrieving workspaces.";
     return NextResponse.json(
-      { error: "Internal server error occurred while retrieving workspaces." },
+      {
+        error: "Internal server error occurred while retrieving workspaces.",
+        details,
+      },
       { status: 500 }
     );
   }
