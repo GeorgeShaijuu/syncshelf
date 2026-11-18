@@ -1,0 +1,91 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isWorkspaceMember(workspaceId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid));
+    }
+
+    // User profiles and membership index
+    match /users/{userId} {
+      allow get: if isUser(userId);
+      allow list: if false;
+      allow write: if false;
+
+      match /workspaceMemberships/{workspaceId} {
+        allow read: if isUser(userId);
+        allow write: if false;
+      }
+    }
+
+    // Workspaces and subcollections
+    match /workspaces/{workspaceId} {
+      // Direct get allowed only for authenticated members
+      allow get: if isWorkspaceMember(workspaceId);
+      // Deny root collection listing; users discover workspaces via their membership index
+      allow list: if false;
+      // All client writes are strictly denied (mutations must go through Next.js API / Admin SDK)
+      allow write: if false;
+
+      // Workspace members subcollection
+      match /members/{memberUid} {
+        allow read: if isWorkspaceMember(workspaceId);
+        allow write: if false;
+      }
+
+      // Workspace items (clipboard entries)
+      match /items/{itemId} {
+        allow read: if isWorkspaceMember(workspaceId);
+        allow write: if false;
+      }
+
+      // Workspace invites subcollection (Server only via Admin SDK)
+      match /invites/{inviteId} {
+        allow read, write: if false;
+      }
+
+      // Workspace auditLogs subcollection (Server only via Admin SDK)
+      match /auditLogs/{eventId} {
+        allow read, write: if false;
+      }
+
+      // Workspace shares subcollection (Server only via Admin SDK)
+      match /shares/{shareId} {
+        allow read, write: if false;
+      }
+    }
+
+    // Sensitive collections managed strictly server-side by Admin SDK
+    match /invites/{inviteId} {
+      allow read, write: if false;
+    }
+
+    match /shares/{shareId} {
+      allow read, write: if false;
+    }
+
+    match /publicSharePointers/{pointerId} {
+      allow read, write: if false;
+    }
+
+    match /auditLogs/{logId} {
+      allow read, write: if false;
+    }
+
+    // Default catch-all: deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

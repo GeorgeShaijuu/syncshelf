@@ -1,0 +1,21 @@
+import { z } from "zod";
+
+export const createWorkspaceSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Workspace name must be at least 2 characters")
+    .max(50, "Workspace name must not exceed 50 characters"),
+});
+
+export type CreateWorkspaceInput = z.infer<typeof createWorkspaceSchema>;
+
+export const updateWorkspaceSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Workspace name must be at least 2 characters")
+    .max(50, "Workspace name must not exceed 50 characters"),
+});
+
+export type UpdateWorkspaceInput = z.infer<typeof updateWorkspaceSchema>;
