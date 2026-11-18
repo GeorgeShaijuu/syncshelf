@@ -237,6 +237,12 @@ export interface ClipboardItem {
   url?: string;
   presignedUrl?: string;
   createdBy: string;
+  createdByUid?: string;
+  createdByDisplayName?: string;
+  createdByAvatarUrl?: string;
+  updatedByUid?: string;
+  updatedByDisplayName?: string;
+  updatedByAvatarUrl?: string;
   createdAt: string; // ISO string when returned over API
   updatedAt: string;
   isPinned: boolean;

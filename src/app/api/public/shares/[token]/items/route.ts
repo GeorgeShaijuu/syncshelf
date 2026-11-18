@@ -26,12 +26,16 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const authHeader = req.headers.get("authorization");
     let reqUserUid: string | null = null;
     let reqUserEmail: string | null = null;
+    let reqUserDisplayName: string | null = null;
+    let reqUserAvatarUrl: string | null = null;
 
     if (authHeader) {
       const user = await verifyAuthToken(authHeader);
       if (user) {
         reqUserUid = user.uid;
         reqUserEmail = user.email || null;
+        reqUserDisplayName = user.displayName || user.email?.split("@")[0] || null;
+        reqUserAvatarUrl = user.decodedToken.picture || null;
       }
     }
 
@@ -101,6 +105,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const now = FieldValue.serverTimestamp();
 
     const creatorId = reqUserUid || `shared_editor_${authResult.shareId.slice(0, 8)}`;
+    const creatorName = reqUserDisplayName || "Shared Collaborator";
 
     const itemData = {
       id: itemId,
@@ -111,6 +116,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       language: type === "code" ? language || "plaintext" : null,
       calendarDate: calendarDate || null,
       createdBy: creatorId,
+      createdByUid: reqUserUid || null,
+      createdByDisplayName: creatorName,
+      createdByAvatarUrl: reqUserAvatarUrl || null,
+      updatedByUid: reqUserUid || null,
+      updatedByDisplayName: creatorName,
+      updatedByAvatarUrl: reqUserAvatarUrl || null,
       createdAt: now,
       updatedAt: now,
       isPinned: Boolean(isPinned),
@@ -149,6 +160,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           content,
           language: itemData.language || undefined,
           calendarDate: calendarDate || null,
+          createdByDisplayName: creatorName,
+          createdByAvatarUrl: reqUserAvatarUrl || undefined,
+          updatedByDisplayName: creatorName,
+          updatedByAvatarUrl: reqUserAvatarUrl || undefined,
           isPinned: Boolean(isPinned),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),

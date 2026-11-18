@@ -2,11 +2,12 @@
 
 import * as React from "react";
 import {
+  Type,
   Code2,
   Link2,
   Image as ImageIcon,
   AudioLines,
-  Play,
+  Video,
   FileText,
   Inbox,
   Check,
@@ -35,7 +36,7 @@ export const BOARD_LANES: LaneDefinition[] = [
   {
     id: "text",
     title: "Text",
-    badgeContent: <span className="font-bold text-xs">T</span>,
+    badgeContent: <Type className="h-3.5 w-3.5 stroke-[2.2]" />,
     badgeStyle: "bg-[#FFE8D6] text-[#A65E26]",
   },
   {
@@ -65,7 +66,7 @@ export const BOARD_LANES: LaneDefinition[] = [
   {
     id: "video",
     title: "Video",
-    badgeContent: <Play className="h-3 w-3 fill-current ml-0.5" />,
+    badgeContent: <Video className="h-3.5 w-3.5 stroke-[2.2]" />,
     badgeStyle: "bg-[#FFE6D9] text-[#F28A32]",
   },
   {

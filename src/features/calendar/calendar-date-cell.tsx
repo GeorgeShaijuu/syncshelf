@@ -2,11 +2,12 @@
 
 import * as React from "react";
 import {
+  Type,
   Code2,
   Link2,
   Image as ImageIcon,
   AudioLines,
-  Play,
+  Video,
   FileText,
 } from "lucide-react";
 import { CalendarDayInfo } from "./calendar-types";
@@ -37,43 +38,43 @@ export function CalendarDateCell({ day, onSelectDate }: CalendarDateCellProps) {
     {
       type: "text",
       count: countsByType.text,
-      icon: <span className="font-extrabold text-[10px] leading-none select-none">T</span>,
+      icon: <Type className="h-3 w-3 stroke-[2.2]" />,
       pillClass: "bg-[#FFE8D6] text-[#A65E26] border-[#FCD5B5]",
     },
     {
       type: "code",
       count: countsByType.code,
-      icon: <Code2 className="h-2.5 w-2.5 stroke-[2.4]" />,
+      icon: <Code2 className="h-3 w-3 stroke-[2.2]" />,
       pillClass: "bg-[#E9DDF6] text-[#6948A4] border-[#D5C2EC]",
     },
     {
       type: "link",
       count: countsByType.link,
-      icon: <Link2 className="h-2.5 w-2.5 stroke-[2.4]" />,
+      icon: <Link2 className="h-3 w-3 stroke-[2.2]" />,
       pillClass: "bg-[#FFF2D4] text-[#9A6D14] border-[#FDE3A8]",
     },
     {
       type: "image",
       count: countsByType.image,
-      icon: <ImageIcon className="h-2.5 w-2.5 stroke-[2.4]" />,
+      icon: <ImageIcon className="h-3 w-3 stroke-[2.2]" />,
       pillClass: "bg-[#FFE5E2] text-[#B73D30] border-[#F9CBC6]",
     },
     {
       type: "audio",
       count: countsByType.audio,
-      icon: <AudioLines className="h-2.5 w-2.5 stroke-[2.4]" />,
+      icon: <AudioLines className="h-3 w-3 stroke-[2.2]" />,
       pillClass: "bg-[#FCE8EB] text-[#A43B4E] border-[#F8C8D0]",
     },
     {
       type: "video",
       count: countsByType.video,
-      icon: <Play className="h-2 w-2 fill-current ml-0.5" />,
+      icon: <Video className="h-3 w-3 stroke-[2.2]" />,
       pillClass: "bg-[#FEE4E2] text-[#B92F24] border-[#F9C3BE]",
     },
     {
       type: "file",
       count: countsByType.file,
-      icon: <FileText className="h-2.5 w-2.5 stroke-[2.4]" />,
+      icon: <FileText className="h-3 w-3 stroke-[2.2]" />,
       pillClass: "bg-[#FEF0D4] text-[#986415] border-[#F9DC9F]",
     },
   ].filter((t) => t.count > 0);
@@ -127,13 +128,14 @@ export function CalendarDateCell({ day, onSelectDate }: CalendarDateCellProps) {
           <span
             key={type}
             className={cn(
-              "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold border shadow-[0_1px_2px_rgba(36,33,31,0.04)]",
+              "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[10px] font-bold border transition-transform duration-100",
+              "shadow-[0_1px_2px_rgba(36,33,31,0.04),inset_0_1px_0_rgba(255,255,255,0.7)]",
               pillClass
             )}
             title={`${count} ${type} ${count === 1 ? "item" : "items"}`}
           >
             <span className="flex items-center justify-center shrink-0">{icon}</span>
-            <span className="font-semibold text-[9.5px] opacity-95">{count}</span>
+            <span className="font-semibold text-[9.5px] leading-none opacity-95">{count}</span>
           </span>
         ))}
       </div>

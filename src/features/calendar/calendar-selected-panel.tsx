@@ -12,10 +12,13 @@ import {
   Pause,
   Inbox,
   Loader2,
+  Type,
+  Code2,
   Link2,
   Image as ImageIcon,
   FileText,
   AudioLines,
+  Video,
 } from "lucide-react";
 import { ClipboardItem, ClipboardItemType } from "@/lib/validation/item";
 import { CalendarFilterType } from "./calendar-types";
@@ -97,8 +100,8 @@ export function CalendarSelectedPanel({
           )}
         >
           <div className="flex items-start gap-2.5">
-            <div className="h-6 w-6 rounded-full bg-[#FFE8D6] text-[#A65E26] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5 shadow-2xs">
-              T
+            <div className="h-6 w-6 rounded-full bg-[#FFE8D6] text-[#A65E26] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+              <Type className="h-3.5 w-3.5 stroke-[2.2]" />
             </div>
             <div className="min-w-0 flex-1 space-y-1">
               <h5 className="text-xs font-bold text-[#24211F] leading-snug">
@@ -167,8 +170,8 @@ export function CalendarSelectedPanel({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="h-6 w-6 rounded-full bg-[#E9DDF6] text-[#6948A4] flex items-center justify-center font-bold text-[9px] shrink-0 shadow-2xs">
-                &lt;&gt;
+              <div className="h-6 w-6 rounded-full bg-[#E9DDF6] text-[#6948A4] flex items-center justify-center shrink-0 shadow-2xs">
+                <Code2 className="h-3.5 w-3.5 stroke-[2.2]" />
               </div>
               <h5 className="text-xs font-bold text-[#24211F] truncate">
                 {item.title}
@@ -373,7 +376,7 @@ export function CalendarSelectedPanel({
             {isAudio ? (
               <AudioLines className="h-3.5 w-3.5 stroke-[2.2]" />
             ) : isVideo ? (
-              <Play className="h-2.5 w-2.5 fill-current ml-0.5" />
+              <Video className="h-3.5 w-3.5 stroke-[2.2]" />
             ) : (
               <FileText className="h-3.5 w-3.5 stroke-[2.2]" />
             )}

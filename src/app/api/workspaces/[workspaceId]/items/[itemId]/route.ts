@@ -79,6 +79,9 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const data = parseResult.data;
     const updates: Record<string, any> = {
       updatedAt: FieldValue.serverTimestamp(),
+      updatedByUid: user.uid,
+      updatedByDisplayName: user.displayName || user.email?.split("@")[0] || "Collaborator",
+      updatedByAvatarUrl: user.decodedToken.picture || null,
     };
 
     if (data.title !== undefined) {

@@ -129,6 +129,10 @@ export interface PublicClipboardItem {
   presignedUrl?: string;
   isPinned?: boolean;
   calendarDate?: string | null;
+  createdByDisplayName?: string;
+  createdByAvatarUrl?: string;
+  updatedByDisplayName?: string;
+  updatedByAvatarUrl?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -146,6 +150,8 @@ export interface PublicShareMetadata {
   allowPublicEditing: boolean;
   effectivePermission: SharePermission;
   workspaceName: string;
+  workspaceOwnerName?: string;
+  workspaceOwnerAvatarUrl?: string;
   itemCount: number;
   title?: string;
   createdAt: string;
@@ -196,6 +202,12 @@ export interface StoredItemDocument {
   mimeType?: string;
   isPinned?: boolean;
   calendarDate?: string | null;
+  createdByUid?: string;
+  createdByDisplayName?: string;
+  createdByAvatarUrl?: string;
+  updatedByUid?: string;
+  updatedByDisplayName?: string;
+  updatedByAvatarUrl?: string;
   createdAt: any;
   updatedAt?: any;
 }
