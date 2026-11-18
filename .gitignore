@@ -5,9 +5,11 @@
 
 # testing & coverage
 /coverage
-/tests
+
 # next.js build outputs
 /.next/
+/.next_prod/
+/.next_prod*/
 /out/
 /dist/
 /.turbo/
