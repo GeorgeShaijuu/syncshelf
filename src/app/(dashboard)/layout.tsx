@@ -9,7 +9,7 @@ import {
   WorkspaceItemsProvider,
   useWorkspaceItemsContext,
 } from "@/features/clipboard/workspace-items-context";
-import { Loader2 } from "lucide-react";
+import { AppLoadingScreen } from "@/components/ui/app-loading-screen";
 
 function DashboardAppShellWrapper({ children }: { children: React.ReactNode }) {
   const { connectionState, lastSyncedAt } = useWorkspaceItemsContext();
@@ -40,12 +40,7 @@ export default function DashboardLayout({
   return (
     <AuthGuard requireAuth={true}>
       {workspaceLoading ? (
-        <div className="flex h-screen w-full items-center justify-center bg-background text-foreground">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <span className="text-xs text-muted-foreground">Loading workspaces...</span>
-          </div>
-        </div>
+        <AppLoadingScreen />
       ) : (
         <WorkspaceItemsProvider>
           <DashboardAppShellWrapper>{children}</DashboardAppShellWrapper>

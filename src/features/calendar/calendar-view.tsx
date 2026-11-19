@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 interface CalendarViewProps {
   workspace: Workspace;
   items: ClipboardItem[];
+  loading?: boolean;
   canManage: boolean;
   onPinToggle: (item: ClipboardItem) => void;
   onItemUpdated: (item: ClipboardItem) => void;
@@ -49,6 +50,7 @@ const VIEW_OPTIONS: { label: string; value: CalendarViewMode }[] = [
 export function CalendarView({
   workspace,
   items,
+  loading = false,
   canManage,
   onPinToggle,
   onItemUpdated,
@@ -216,6 +218,7 @@ export function CalendarView({
           {viewMode === "month" && (
             <CalendarMonthGrid
               days={monthDays}
+              loading={loading}
               onSelectDate={handleSelectDate}
             />
           )}
@@ -244,6 +247,7 @@ export function CalendarView({
       <CalendarSelectedPanel
         selectedDateString={selectedDateString}
         items={selectedDateItems}
+        loading={loading}
         canManage={canManage}
         onPasteClick={() => onPasteCapture(selectedDateString)}
         onPinToggle={onPinToggle}

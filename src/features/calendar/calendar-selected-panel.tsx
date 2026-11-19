@@ -25,11 +25,13 @@ import { CalendarFilterType } from "./calendar-types";
 import { formatSelectedDateDisplay, getSelectedDateHeading } from "./calendar-utils";
 import { getRelativeTimeString, formatFileSizeShort } from "@/features/clipboard/board/board-card-renderers";
 import { CardActionMenu } from "@/features/clipboard/board/card-action-menu";
+import { ClipboardCardSkeleton } from "@/components/ui/lottie-skeleton";
 import { cn } from "@/lib/utils";
 
 interface CalendarSelectedPanelProps {
   selectedDateString: string;
   items: ClipboardItem[];
+  loading?: boolean;
   canManage: boolean;
   onPasteClick: () => void;
   onPinToggle: (item: ClipboardItem) => void;
@@ -52,6 +54,7 @@ const FILTER_OPTIONS: { type: CalendarFilterType; label: string }[] = [
 export function CalendarSelectedPanel({
   selectedDateString,
   items,
+  loading = false,
   canManage,
   onPasteClick,
   onPinToggle,
@@ -478,7 +481,13 @@ export function CalendarSelectedPanel({
 
       {/* 3. Vertically Scrollable List of Cards */}
       <div className="flex-1 overflow-y-auto space-y-2.5 pr-0.5 scrollbar-thin select-text">
-        {filteredItems.length === 0 ? (
+        {loading ? (
+          <>
+            <ClipboardCardSkeleton className="h-[120px]" />
+            <ClipboardCardSkeleton className="h-[120px]" />
+            <ClipboardCardSkeleton className="h-[120px]" />
+          </>
+        ) : filteredItems.length === 0 ? (
           <div className="h-48 flex flex-col items-center justify-center text-center p-4 rounded-2xl border border-dashed border-[#DDD5C7] bg-[#FAF7F0]/40">
             <Inbox className="h-7 w-7 mb-2 opacity-40 text-[#817A72]" />
             <h5 className="text-xs font-bold text-[#24211F]">No items for this date</h5>

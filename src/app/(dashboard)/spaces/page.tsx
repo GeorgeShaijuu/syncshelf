@@ -29,6 +29,7 @@ import {
   Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RecentSpaceCardSkeleton } from "@/components/ui/lottie-skeleton";
 
 interface RecentSpace {
   id: string;
@@ -274,9 +275,10 @@ export default function SpacesCollectionPage() {
         </div>
 
         {loadingRecent ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-2 text-center text-xs text-[#817A72]">
-            <Loader2 className="h-5 w-5 animate-spin text-[#F58B35]" />
-            <span>Loading recently visited spaces...</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <RecentSpaceCardSkeleton />
+            <RecentSpaceCardSkeleton />
+            <RecentSpaceCardSkeleton />
           </div>
         ) : filteredRecentSpaces.length === 0 ? (
           <div className="clay-card p-8 bg-[#FFFEFA] border border-[#EDE5D9] rounded-2xl text-center space-y-2">

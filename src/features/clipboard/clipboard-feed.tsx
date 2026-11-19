@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ClipboardCard } from "@/features/clipboard/clipboard-card";
+import { ClipboardCardSkeleton } from "@/components/ui/lottie-skeleton";
 import { QuickCaptureModal } from "@/features/clipboard/quick-capture-modal";
 import { UniversalPasteZone } from "@/features/clipboard/universal-paste-zone";
 import { EditItemModal } from "@/features/clipboard/edit-item-modal";
@@ -387,14 +388,7 @@ export function ClipboardFeed({
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((n) => (
-            <div
-              key={n}
-              className="h-44 rounded-xl border border-border/60 bg-muted/20 animate-pulse p-4 space-y-3"
-            >
-              <div className="h-4 w-1/3 bg-muted rounded" />
-              <div className="h-16 w-full bg-muted/60 rounded" />
-              <div className="h-4 w-1/4 bg-muted rounded" />
-            </div>
+            <ClipboardCardSkeleton key={n} />
           ))}
         </div>
       ) : sortedItems.length === 0 ? (

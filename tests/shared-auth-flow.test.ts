@@ -226,7 +226,7 @@ describe("CRITICAL VERIFICATION — Shared Workspace Auth, Onboarding & Recent S
     vi.spyOn(permModule, "getWorkspaceMemberRole").mockImplementation(
       async (_db, _wsId, uid) => (uid === mockWorkspace.ownerUid ? "owner" : null)
     );
-    vi.spyOn(auditModule, "logAuditEvent").mockResolvedValue();
+    vi.spyOn(auditModule, "logAuditEvent").mockResolvedValue("mock-audit-id");
 
     return { mockAdminDb, itemsMap, collaboratorsMap, recentSpacesMap };
   }

@@ -151,6 +151,7 @@ export default function CalendarPage() {
     <CalendarView
       workspace={activeWorkspace}
       items={items}
+      loading={loading}
       canManage={canManage}
       onPinToggle={optimisticPinToggle}
       onItemUpdated={optimisticItemUpdated}

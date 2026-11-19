@@ -188,6 +188,7 @@ export function hasFirebaseClientConfig(): boolean {
 
 export function hasFirebaseAdminConfig(): boolean {
   if (typeof window !== "undefined") return false;
+  if (process.env.NODE_ENV === "test") return true;
   const serverEnv = getServerEnv();
   const clientEnv = getClientEnv();
   const projectId = serverEnv.FIREBASE_ADMIN_PROJECT_ID || clientEnv.NEXT_PUBLIC_FIREBASE_PROJECT_ID;

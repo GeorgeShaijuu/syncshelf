@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { BOARD_LANES, BoardLane } from "./board-lane";
+import { BoardLaneSkeleton } from "@/components/ui/lottie-skeleton";
 import { FocusExpandedLane } from "./focus-expanded-lane";
 import { FocusMinimisedPanel } from "./focus-minimised-panel";
 import { SelectionToolbar } from "./selection-toolbar";
@@ -436,30 +437,34 @@ export function BoardCanvas({
                 : "cursor-default"
             )}
           >
-            {BOARD_LANES.map((lane) => {
-              const laneItems = laneItemMap.get(lane.id) || [];
-              return (
-                <BoardLane
-                  key={lane.id}
-                  lane={lane}
-                  items={laneItems}
-                  canManage={canManage}
-                  isSelectMode={isSelectMode}
-                  selectedItemIds={selectedItemIds}
-                  isActiveLane={activeLaneId === lane.id}
-                  onSelectLane={setActiveLaneId}
-                  onToggleSelectItem={toggleSelectItem}
-                  onPinToggle={onPinToggle}
-                  onEdit={setEditingItem}
-                  onDelete={setDeletingItem}
-                  onShare={handleCardShare}
-                  onAddItem={handleAddItemToLane}
-                  onSelectLaneItems={handleSelectLaneItems}
-                  onBatchPin={handleBatchPinLane}
-                  onMaximiseLane={setMaximisedLaneId}
-                />
-              );
-            })}
+            {loading
+              ? BOARD_LANES.map((lane) => (
+                  <BoardLaneSkeleton key={lane.id} />
+                ))
+              : BOARD_LANES.map((lane) => {
+                  const laneItems = laneItemMap.get(lane.id) || [];
+                  return (
+                    <BoardLane
+                      key={lane.id}
+                      lane={lane}
+                      items={laneItems}
+                      canManage={canManage}
+                      isSelectMode={isSelectMode}
+                      selectedItemIds={selectedItemIds}
+                      isActiveLane={activeLaneId === lane.id}
+                      onSelectLane={setActiveLaneId}
+                      onToggleSelectItem={toggleSelectItem}
+                      onPinToggle={onPinToggle}
+                      onEdit={setEditingItem}
+                      onDelete={setDeletingItem}
+                      onShare={handleCardShare}
+                      onAddItem={handleAddItemToLane}
+                      onSelectLaneItems={handleSelectLaneItems}
+                      onBatchPin={handleBatchPinLane}
+                      onMaximiseLane={setMaximisedLaneId}
+                    />
+                  );
+                })}
           </div>
 
           {/* Horizontal Scrollbar Slider at Bottom Center */}

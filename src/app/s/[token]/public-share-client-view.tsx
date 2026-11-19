@@ -34,6 +34,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OrganicBackgroundArtwork } from "@/components/ui/organic-background-artwork";
+import { BoardLaneSkeleton } from "@/components/ui/lottie-skeleton";
 import {
   PublicClipboardItem,
   PublicShareMetadata,
@@ -771,11 +772,11 @@ export function PublicShareClientView({ token }: PublicShareClientViewProps) {
         {/* Main Content Area */}
         <main className="flex-1 w-full relative">
           {loading ? (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-[#F58B35]" />
-              <p className="text-xs text-[#736B63] font-mono">
-                Connecting to live shared workspace...
-              </p>
+            <div className="flex-1 w-full overflow-hidden pl-6 pr-6 pt-3 pb-3 flex items-start gap-5 no-scrollbar">
+              <BoardLaneSkeleton />
+              <BoardLaneSkeleton />
+              <BoardLaneSkeleton />
+              <BoardLaneSkeleton />
             </div>
           ) : errorStatus ? (
             /* Error & Auth States */
