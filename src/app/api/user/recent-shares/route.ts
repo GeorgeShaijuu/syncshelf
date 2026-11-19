@@ -108,3 +108,55 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+/**
+ * DELETE /api/user/recent-shares?shareId=[shareId]
+ * Dismisses a recently viewed shared link from the user's dashboard.
+ */
+export async function DELETE(req: NextRequest) {
+  try {
+    const authHeader = req.headers.get("authorization");
+    const user = await verifyAuthToken(authHeader);
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized: Invalid or missing authentication token" },
+        { status: 401 }
+      );
+    }
+
+    const url = new URL(req.url);
+    const shareId = url.searchParams.get("shareId");
+
+    if (!shareId) {
+      return NextResponse.json(
+        { error: "Missing shareId parameter" },
+        { status: 400 }
+      );
+    }
+
+    const adminDb = getAdminDb();
+    await Promise.all([
+      adminDb
+        .collection("users")
+        .doc(user.uid)
+        .collection("recentShares")
+        .doc(shareId)
+        .delete(),
+      adminDb
+        .collection("users")
+        .doc(user.uid)
+        .collection("recentSpaces")
+        .doc(shareId)
+        .delete(),
+    ]);
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    console.error("[Recent Shares API] DELETE error:", error);
+    return NextResponse.json(
+      { error: "Internal server error dismissing recent share" },
+      { status: 500 }
+    );
+  }
+}

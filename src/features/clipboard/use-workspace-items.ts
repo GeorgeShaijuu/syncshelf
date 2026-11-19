@@ -204,7 +204,15 @@ export function useWorkspaceItems({
       return;
     }
 
-    if (!workspaceId || (activeWorkspaceId && activeWorkspaceId !== workspaceId)) {
+    if (!workspaceId) {
+      setConnectionState("offline");
+      setError(null);
+      setLoading(false);
+      setRealtimeMap(new Map());
+      return;
+    }
+
+    if (activeWorkspaceId && activeWorkspaceId !== workspaceId) {
       setConnectionState("error");
       setError("Active workspace context mismatch");
       setLoading(false);

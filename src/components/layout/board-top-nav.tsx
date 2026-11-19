@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Check,
   X,
+  Compass,
 } from "lucide-react";
 import { useWorkspace } from "@/features/workspaces/workspace-context";
 import { useBoard } from "@/features/clipboard/board/board-context";
@@ -212,69 +213,92 @@ export function BoardTopNav({ syncState = "live", lastSyncedAt }: BoardTopNavPro
         </div>
       </div>
 
-      {/* Far Right: Workspace Selector with Elevated Pill */}
-      <div className="relative shrink-0">
-        <button
-          ref={workspaceTriggerRef}
-          type="button"
-          onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
-          className="clay-btn-secondary flex items-center gap-2 h-9 px-4 text-xs font-bold text-[#24211F] active:scale-95 transition-all cursor-pointer"
-        >
-          <Layers className="h-3.5 w-3.5 text-[#24211F]" />
-          <span>{workspaceName}</span>
-          <ChevronDown
-            className={cn(
-              "h-3.5 w-3.5 text-[#817A72] ml-0.5 transition-transform duration-200",
-              workspaceMenuOpen && "rotate-180"
-            )}
-          />
-        </button>
-
-        {/* Workspace Dropdown Menu */}
-        {workspaceMenuOpen && (
-          <div
-            ref={workspaceMenuRef}
-            className="absolute right-0 top-11 z-50 w-60 rounded-2xl border border-[#EDE5D9] bg-[#FFFEFA] p-2 shadow-[0_14px_36px_rgba(36,33,31,0.12),0_4px_12px_rgba(36,33,31,0.06),inset_0_1px_1px_rgba(255,255,255,1)] animate-pop-in"
+      {/* Far Right: Spaces Link and Workspace Selector */}
+      <div className="flex items-center gap-2 shrink-0">
+        <Link href="/spaces" title="Spaces Collection">
+          <button
+            type="button"
+            className="clay-icon-btn flex items-center gap-1.5 h-9 px-3 rounded-full text-xs font-semibold text-[#817A72] hover:text-[#24211F] hover:bg-[#F5EFE5] transition-all cursor-pointer"
           >
-            <div className="px-3 py-1.5 text-[10px] font-bold text-[#817A72] uppercase tracking-wider">
-              Workspaces ({workspaces.length})
-            </div>
-            <div className="max-h-56 overflow-y-auto space-y-1 scrollbar-thin">
-              {workspaces.map((ws) => {
-                const isSelected = activeWorkspace?.id === ws.id;
-                return (
-                  <button
-                    key={ws.id}
-                    type="button"
-                    onClick={() => {
-                      selectWorkspace(ws.id);
-                      setWorkspaceMenuOpen(false);
-                    }}
-                    className={cn(
-                      "flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs text-left transition-colors cursor-pointer",
-                      isSelected
-                        ? "bg-[#24211F] text-[#FFFEFA] font-medium"
-                        : "text-[#24211F] hover:bg-[#F5EFE5]"
-                    )}
-                  >
-                    <div className="truncate">
-                      <div className="truncate font-medium">{ws.name}</div>
-                      <div
-                        className={cn(
-                          "text-[10px] capitalize",
-                          isSelected ? "text-gray-300" : "text-[#817A72]"
-                        )}
-                      >
-                        {ws.role} • {ws.memberCount || 1} {ws.memberCount === 1 ? "member" : "members"}
+            <Compass className="h-4 w-4 text-[#F58B35]" />
+            <span className="hidden md:inline">Spaces</span>
+          </button>
+        </Link>
+
+        <div className="relative shrink-0">
+          <button
+            ref={workspaceTriggerRef}
+            type="button"
+            onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
+            className="clay-btn-secondary flex items-center gap-2 h-9 px-4 text-xs font-bold text-[#24211F] active:scale-95 transition-all cursor-pointer"
+          >
+            <Layers className="h-3.5 w-3.5 text-[#24211F]" />
+            <span>{workspaceName}</span>
+            <ChevronDown
+              className={cn(
+                "h-3.5 w-3.5 text-[#817A72] ml-0.5 transition-transform duration-200",
+                workspaceMenuOpen && "rotate-180"
+              )}
+            />
+          </button>
+
+          {/* Workspace Dropdown Menu */}
+          {workspaceMenuOpen && (
+            <div
+              ref={workspaceMenuRef}
+              className="absolute right-0 top-11 z-50 w-60 rounded-2xl border border-[#EDE5D9] bg-[#FFFEFA] p-2 shadow-[0_14px_36px_rgba(36,33,31,0.12),0_4px_12px_rgba(36,33,31,0.06),inset_0_1px_1px_rgba(255,255,255,1)] animate-pop-in"
+            >
+              <div className="px-3 py-1.5 text-[10px] font-bold text-[#817A72] uppercase tracking-wider">
+                Workspaces ({workspaces.length})
+              </div>
+              <div className="max-h-56 overflow-y-auto space-y-1 scrollbar-thin">
+                {workspaces.map((ws) => {
+                  const isSelected = activeWorkspace?.id === ws.id;
+                  return (
+                    <button
+                      key={ws.id}
+                      type="button"
+                      onClick={() => {
+                        selectWorkspace(ws.id);
+                        setWorkspaceMenuOpen(false);
+                      }}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs text-left transition-colors cursor-pointer",
+                        isSelected
+                          ? "bg-[#24211F] text-[#FFFEFA] font-medium"
+                          : "text-[#24211F] hover:bg-[#F5EFE5]"
+                      )}
+                    >
+                      <div className="truncate">
+                        <div className="truncate font-medium">{ws.name}</div>
+                        <div
+                          className={cn(
+                            "text-[10px] capitalize",
+                            isSelected ? "text-gray-300" : "text-[#817A72]"
+                          )}
+                        >
+                          {ws.role} • {ws.memberCount || 1} {ws.memberCount === 1 ? "member" : "members"}
+                        </div>
                       </div>
-                    </div>
-                    {isSelected && <Check className="h-3.5 w-3.5 shrink-0 ml-2" />}
-                  </button>
-                );
-              })}
+                      {isSelected && <Check className="h-3.5 w-3.5 shrink-0 ml-2" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="pt-1.5 mt-1 border-t border-[#EDE5D9]/60">
+                <Link
+                  href="/spaces"
+                  onClick={() => setWorkspaceMenuOpen(false)}
+                  className="flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-[#F58B35] font-semibold hover:bg-[#FFE4D0]/40 transition-colors"
+                >
+                  <Compass className="h-3.5 w-3.5" />
+                  <span>Browse All Spaces</span>
+                </Link>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </header>
   );

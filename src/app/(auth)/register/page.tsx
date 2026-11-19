@@ -5,28 +5,17 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/features/auth/auth-context";
 import { AuthGuard } from "@/features/auth/auth-guard";
-import { formatAuthError } from "@/features/auth/auth-helpers";
+import { formatAuthError, getReturnUrlFromSearchParams } from "@/features/auth/auth-helpers";
 import { OrganicBackgroundArtwork } from "@/components/ui/organic-background-artwork";
 import { ClayButton, ClayInput, ClaySurface } from "@/components/ui/clay";
 import { Layers, Loader2, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
-
-function sanitizeReturnUrl(url: string | null | undefined): string {
-  if (!url) return "/";
-  const trimmed = url.trim();
-  // Strictly enforce relative return path to prevent open-redirect vulnerabilities
-  if (trimmed.startsWith("/") && !trimmed.startsWith("//") && !trimmed.startsWith("/\\")) {
-    return trimmed;
-  }
-  return "/";
-}
 
 function RegisterForm() {
   const { signUp, signInWithGoogle } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const rawReturnUrl = searchParams.get("returnUrl") || searchParams.get("continue");
-  const targetReturnUrl = sanitizeReturnUrl(rawReturnUrl);
+  const targetReturnUrl = getReturnUrlFromSearchParams(searchParams, "/spaces");
   const isSharedDestination = targetReturnUrl.startsWith("/s/");
 
   const [name, setName] = React.useState("");
@@ -247,8 +236,8 @@ function RegisterForm() {
           Already have an account?{" "}
           <Link
             href={
-              rawReturnUrl
-                ? `/login?returnUrl=${encodeURIComponent(rawReturnUrl)}`
+              targetReturnUrl && targetReturnUrl !== "/spaces" && targetReturnUrl !== "/"
+                ? `/login?returnTo=${encodeURIComponent(targetReturnUrl)}`
                 : "/login"
             }
             className="font-bold text-[#F58B35] hover:underline"

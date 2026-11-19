@@ -22,6 +22,8 @@ import {
   HardDrive,
   LogOut,
   Check,
+  Compass,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +44,9 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
   const typeParam = searchParams.get("type");
 
   const navItems = [
-    { id: "all", label: "Board", icon: LayoutGrid, href: "/" },
+    { id: "spaces", label: "Spaces", icon: Compass, href: "/spaces" },
+    { id: "all", label: "My Board", icon: LayoutGrid, href: activeWorkspace ? "/" : "/spaces" },
+    { id: "calendar", label: "Calendar", icon: Calendar, href: "/calendar" },
     { id: "pinned", label: "Pinned", icon: Pin, href: "/pinned" },
     { id: "shares", label: "Shared Links", icon: Share2, href: "/shared" },
     { id: "members", label: "Team", icon: Users, href: "/members" },
@@ -62,12 +66,18 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
   const displayName = user?.displayName || user?.email?.split("@")[0] || "Team Member";
   const userInitial = displayName.charAt(0).toUpperCase();
 
-  const workspaceName = activeWorkspace?.name || "Personal Shelf";
-  const workspaceRole = activeWorkspace?.role || "owner";
+  const workspaceName = activeWorkspace?.name || "Spaces Collection";
+  const workspaceRole = activeWorkspace?.role || "collaborator";
 
   const isNavActive = (id: string, href: string) => {
+    if (id === "spaces") {
+      return pathname === "/spaces";
+    }
     if (id === "all") {
       return pathname === "/" && !typeParam;
+    }
+    if (id === "calendar") {
+      return pathname === "/calendar";
     }
     if (id === "pinned") {
       return pathname === "/pinned";

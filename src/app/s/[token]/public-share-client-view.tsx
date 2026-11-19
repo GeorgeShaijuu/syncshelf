@@ -720,16 +720,41 @@ export function PublicShareClientView({ token }: PublicShareClientViewProps) {
               </Button>
             )}
 
-            {/* Auth Indicator */}
+            {/* Sign In to Edit banner for public edit-enabled links */}
+            {!canEdit && shareMetadata?.allowPublicEditing && !user && (
+              <Link href={`/login?returnTo=/s/${token}`}>
+                <Button
+                  size="sm"
+                  className="h-8 px-3 text-xs bg-gradient-to-b from-[#F99849] to-[#F58B35] text-white hover:from-[#FA8F32] hover:to-[#E57A24] rounded-xl gap-1.5 shadow-[0_2px_6px_rgba(245,139,53,0.25)] font-semibold"
+                >
+                  <Edit3 className="h-3.5 w-3.5" />
+                  <span>Sign in to Edit</span>
+                </Button>
+              </Link>
+            )}
+
+            {/* Auth Indicator & Navigation */}
             {user ? (
-              <div
-                className="h-7 w-7 rounded-full bg-[#FFE4D0] border border-[#F58B35]/30 text-[#F58B35] font-bold text-xs flex items-center justify-center"
-                title={`Signed in as ${user.email}`}
-              >
-                {(user.displayName || user.email || "U").charAt(0).toUpperCase()}
+              <div className="flex items-center gap-2">
+                <Link href="/spaces" title="My Spaces collection">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2.5 text-xs text-[#736B63] hover:text-[#24211F] rounded-xl gap-1.5"
+                  >
+                    <Layers className="h-3.5 w-3.5 text-[#F58B35]" />
+                    <span className="hidden sm:inline font-medium">Spaces</span>
+                  </Button>
+                </Link>
+                <div
+                  className="h-7 w-7 rounded-full bg-[#FFE4D0] border border-[#F58B35]/30 text-[#F58B35] font-bold text-xs flex items-center justify-center shadow-2xs"
+                  title={`Signed in as ${user.email}`}
+                >
+                  {(user.displayName || user.email || "U").charAt(0).toUpperCase()}
+                </div>
               </div>
             ) : (
-              <Link href={`/login?next=/s/${token}`}>
+              <Link href={`/login?returnTo=/s/${token}`}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -793,19 +818,19 @@ export function PublicShareClientView({ token }: PublicShareClientViewProps) {
 
               <div className="pt-2 flex justify-center gap-2">
                 {errorStatus === "auth_required" ? (
-                  <Link href={`/login?next=/s/${token}`}>
-                    <Button className="bg-[#F58B35] text-white hover:bg-[#E07928] text-xs h-9 px-5 rounded-xl font-semibold gap-1.5">
+                  <Link href={`/login?returnTo=/s/${token}`}>
+                    <Button className="bg-[#F58B35] text-white hover:bg-[#E07928] text-xs h-9 px-5 rounded-xl font-semibold gap-1.5 shadow-xs">
                       <LogIn className="h-4 w-4" />
                       <span>Sign In to Continue</span>
                     </Button>
                   </Link>
                 ) : (
-                  <Link href="/">
+                  <Link href="/spaces">
                     <Button
                       variant="outline"
                       className="text-xs h-9 px-4 rounded-xl border-[#EDE5D9]"
                     >
-                      <span>Go to SyncShelf</span>
+                      Return to Spaces
                     </Button>
                   </Link>
                 )}

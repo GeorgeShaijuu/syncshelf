@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/features/workspaces/workspace-context";
 import { useWorkspaceItemsContext } from "@/features/clipboard/workspace-items-context";
 import { BoardCanvas } from "@/features/clipboard/board/board-canvas";
@@ -85,8 +86,20 @@ export default function DashboardHomePage() {
     enabled: canManage,
   });
 
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (!loading && !activeWorkspace) {
+      router.replace("/spaces");
+    }
+  }, [loading, activeWorkspace, router]);
+
   if (!activeWorkspace) {
-    return null;
+    return (
+      <div className="flex h-full w-full items-center justify-center p-8 text-center text-xs text-[#817A72]">
+        Redirecting to Spaces...
+      </div>
+    );
   }
 
   return (

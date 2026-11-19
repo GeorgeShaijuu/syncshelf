@@ -46,15 +46,6 @@ export default function DashboardLayout({
             <span className="text-xs text-muted-foreground">Loading workspaces...</span>
           </div>
         </div>
-      ) : workspaces.length === 0 ? (
-        <WorkspaceOnboarding />
-      ) : !activeWorkspace ? (
-        <div className="flex h-screen w-full items-center justify-center bg-background text-foreground">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <span className="text-xs text-muted-foreground">Selecting workspace...</span>
-          </div>
-        </div>
       ) : (
         <WorkspaceItemsProvider>
           <DashboardAppShellWrapper>{children}</DashboardAppShellWrapper>

@@ -1,9 +1,12 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useWorkspace } from "@/features/workspaces/workspace-context";
 import { useWorkspaceItemsContext } from "@/features/clipboard/workspace-items-context";
 import { CalendarView } from "@/features/calendar/calendar-view";
+import { ClayButton } from "@/components/ui/clay";
+import { Calendar as CalendarIcon } from "lucide-react";
 import {
   useGlobalPasteCapture,
   CapturedClipboardPayload,
@@ -124,7 +127,24 @@ export default function CalendarPage() {
   };
 
   if (!activeWorkspace) {
-    return null;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center space-y-4">
+        <div className="h-12 w-12 rounded-2xl bg-[#FFE8D6] text-[#A65E26] flex items-center justify-center mx-auto shadow-xs">
+          <CalendarIcon className="h-6 w-6 stroke-[2]" />
+        </div>
+        <div className="space-y-1.5 max-w-sm">
+          <h3 className="text-base font-bold text-[#24211F]">No Personal Calendar Active</h3>
+          <p className="text-xs text-[#817A72]">
+            Create a personal workspace to schedule and manage clips by date, or open a shared space.
+          </p>
+        </div>
+        <Link href="/spaces">
+          <ClayButton variant="primary" size="md">
+            <span>Go to Spaces</span>
+          </ClayButton>
+        </Link>
+      </div>
+    );
   }
 
   return (

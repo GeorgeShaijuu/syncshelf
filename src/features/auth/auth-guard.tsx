@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/auth-context";
+import { getReturnUrlFromSearchParams } from "@/features/auth/auth-helpers";
 import { Layers } from "lucide-react";
 
 interface AuthGuardProps {
@@ -18,9 +19,27 @@ export function AuthGuard({ children, requireAuth = true }: AuthGuardProps) {
     if (loading) return;
 
     if (requireAuth && !user) {
-      router.replace("/login");
+      const currentPath =
+        typeof window !== "undefined"
+          ? window.location.pathname + window.location.search
+          : "/spaces";
+      const loginUrl =
+        currentPath &&
+        currentPath !== "/" &&
+        currentPath !== "/spaces" &&
+        currentPath !== "/login" &&
+        currentPath !== "/register"
+          ? `/login?returnTo=${encodeURIComponent(currentPath)}`
+          : "/login";
+      router.replace(loginUrl);
     } else if (!requireAuth && user) {
-      router.replace("/");
+      // Determine where the user was trying to go
+      const searchParams =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search)
+          : null;
+      const targetUrl = getReturnUrlFromSearchParams(searchParams, "/spaces");
+      router.replace(targetUrl);
     }
   }, [user, loading, requireAuth, router]);
 

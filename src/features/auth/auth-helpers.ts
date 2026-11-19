@@ -55,3 +55,32 @@ export function formatAuthError(error: unknown): string {
       return (error as { message?: string }).message || "Authentication failed. Please try again.";
   }
 }
+
+/**
+ * Strictly sanitizes and validates relative return paths to prevent open-redirect vulnerabilities.
+ */
+export function sanitizeReturnUrl(url: string | null | undefined, fallback = "/spaces"): string {
+  if (!url) return fallback;
+  const trimmed = url.trim();
+  // Strictly enforce relative path starting with a single '/'
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//") && !trimmed.startsWith("/\\")) {
+    return trimmed;
+  }
+  return fallback;
+}
+
+/**
+ * Extracts return destination from URL search params checking returnTo, returnUrl, next, continue.
+ */
+export function getReturnUrlFromSearchParams(
+  searchParams: URLSearchParams | null | undefined,
+  fallback = "/spaces"
+): string {
+  if (!searchParams) return fallback;
+  const raw =
+    searchParams.get("returnTo") ||
+    searchParams.get("returnUrl") ||
+    searchParams.get("next") ||
+    searchParams.get("continue");
+  return sanitizeReturnUrl(raw, fallback);
+}

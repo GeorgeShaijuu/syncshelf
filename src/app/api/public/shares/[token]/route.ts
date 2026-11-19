@@ -62,12 +62,16 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const authHeader = req.headers.get("authorization");
     let reqUserUid: string | null = null;
     let reqUserEmail: string | null = null;
+    let reqUserDisplayName: string | null = null;
+    let reqUserAvatarUrl: string | null = null;
 
     if (authHeader) {
       const user = await verifyAuthToken(authHeader);
       if (user) {
         reqUserUid = user.uid;
         reqUserEmail = user.email || null;
+        reqUserDisplayName = user.displayName || user.email?.split("@")[0] || null;
+        reqUserAvatarUrl = user.decodedToken.picture || null;
       }
     }
 
@@ -257,6 +261,81 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     // Increment view count asynchronously
     if (shareRef) {
       shareRef.update({ viewCount: FieldValue.increment(1) }).catch(() => {});
+    }
+
+    // Auto-register authenticated link editors as scoped collaborators & record in Recently Visited Spaces
+    if (reqUserUid) {
+      const now = FieldValue.serverTimestamp();
+
+      // 1. If user is an editor on an edit-enabled share link, register/update them as scoped collaborator
+      if (effectivePermission === "editor" && reqUserUid !== workspaceData.ownerUid) {
+        const collabRef = adminDb
+          .collection("workspaces")
+          .doc(workspaceId)
+          .collection("sharedCollaborators")
+          .doc(reqUserUid);
+
+        collabRef.get().then((snap) => {
+          if (!snap.exists) {
+            return collabRef.set({
+              uid: reqUserUid,
+              displayName: reqUserDisplayName || "Collaborator",
+              avatarUrl: reqUserAvatarUrl || null,
+              shareId,
+              role: "editor",
+              source:
+                shareData.accessMode === "public" ? "public_link_edit" : "authenticated_link",
+              scope: shareData.scope || "board",
+              status: "active",
+              joinedAt: now,
+              lastActivityAt: now,
+            });
+          } else {
+            return collabRef.update({
+              lastActivityAt: now,
+              status: "active",
+              ...(reqUserDisplayName ? { displayName: reqUserDisplayName } : {}),
+              ...(reqUserAvatarUrl ? { avatarUrl: reqUserAvatarUrl } : {}),
+            });
+          }
+        }).catch((err) => {
+          console.warn("[SyncShelf] Failed updating scoped collaborator record:", err);
+        });
+      }
+
+      // 2. Register or update Recently Visited Spaces for this user
+      const recentData = {
+        shareId,
+        workspaceId,
+        token,
+        workspaceName: workspaceData.name || "Shared Workspace",
+        title: shareData.title || null,
+        scope: shareData.scope || "board",
+        effectivePermission,
+        ownerDisplayName:
+          workspaceData.ownerDisplayName || workspaceData.name || "Workspace Owner",
+        ownerAvatarUrl: workspaceData.ownerAvatarUrl || null,
+        itemCount: publicItems.length,
+        lastVisitedAt: now,
+        visitedAt: now,
+      };
+
+      Promise.all([
+        adminDb
+          .collection("users")
+          .doc(reqUserUid)
+          .collection("recentSpaces")
+          .doc(shareId)
+          .set(recentData, { merge: true }),
+        adminDb
+          .collection("users")
+          .doc(reqUserUid)
+          .collection("recentShares")
+          .doc(shareId)
+          .set(recentData, { merge: true }),
+      ]).catch((err) => {
+        console.warn("[SyncShelf] Failed updating recent spaces:", err);
+      });
     }
 
     // Public share metadata

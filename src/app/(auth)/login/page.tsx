@@ -7,28 +7,17 @@ import { sendPasswordResetEmail } from "firebase/auth";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 import { useAuth } from "@/features/auth/auth-context";
 import { AuthGuard } from "@/features/auth/auth-guard";
-import { formatAuthError } from "@/features/auth/auth-helpers";
+import { formatAuthError, getReturnUrlFromSearchParams } from "@/features/auth/auth-helpers";
 import { OrganicBackgroundArtwork } from "@/components/ui/organic-background-artwork";
 import { ClayButton, ClayInput, ClaySurface } from "@/components/ui/clay";
 import { Layers, Loader2, ArrowRight, ShieldCheck, KeyRound, Sparkles } from "lucide-react";
-
-function sanitizeReturnUrl(url: string | null | undefined): string {
-  if (!url) return "/";
-  const trimmed = url.trim();
-  // Strictly enforce relative return path to prevent open-redirect vulnerabilities
-  if (trimmed.startsWith("/") && !trimmed.startsWith("//") && !trimmed.startsWith("/\\")) {
-    return trimmed;
-  }
-  return "/";
-}
 
 function LoginForm() {
   const { signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const rawReturnUrl = searchParams.get("returnUrl") || searchParams.get("continue");
-  const targetReturnUrl = sanitizeReturnUrl(rawReturnUrl);
+  const targetReturnUrl = getReturnUrlFromSearchParams(searchParams, "/spaces");
   const isSharedDestination = targetReturnUrl.startsWith("/s/");
 
   const [email, setEmail] = React.useState("");
@@ -244,8 +233,8 @@ function LoginForm() {
           Don&apos;t have an account yet?{" "}
           <Link
             href={
-              rawReturnUrl
-                ? `/register?returnUrl=${encodeURIComponent(rawReturnUrl)}`
+              targetReturnUrl && targetReturnUrl !== "/spaces" && targetReturnUrl !== "/"
+                ? `/register?returnTo=${encodeURIComponent(targetReturnUrl)}`
                 : "/register"
             }
             className="font-bold text-[#F58B35] hover:underline"

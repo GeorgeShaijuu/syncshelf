@@ -131,6 +131,19 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     await newDocRef.set(itemData);
 
+    // Update collaborator lastActivityAt if authenticated
+    if (reqUserUid) {
+      try {
+        const collabCol = adminDb.collection("workspaces")?.doc(workspaceId)?.collection("sharedCollaborators");
+        if (typeof collabCol?.doc === "function") {
+          collabCol.doc(reqUserUid).update({
+            lastActivityAt: now,
+            status: "active",
+          }).catch(() => {});
+        }
+      } catch {}
+    }
+
     // If share scope was selected_items or item, append new item ID to share so it remains visible
     if (shareData.scope === "selected_items" || shareData.scope === "item") {
       await shareRef.update({
