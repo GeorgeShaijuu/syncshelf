@@ -12,10 +12,14 @@ interface AppLoadingScreenProps {
 
 /**
  * Full-screen initial application loading screen.
- * - Features the official SyncShelf WebM cat mascot animation.
+ * - Features the official SyncShelf cat mascot animation with 100% alpha transparency.
  * - Warm ivory clay background (#FAF7F0) with playful claymorphic aesthetics.
+ * - Mobile & Safari Solution:
+ *   Mobile browsers (especially iOS WebKit / Safari) do not support alpha channels in VP9 WebM
+ *   (rendering transparent pixels as solid black). We use responsive CSS + user-agent detection
+ *   to serve the high-fidelity animated WebP (/animations/loading_main.webp) on mobile & Safari,
+ *   guaranteeing true alpha transparency with zero black borders or hardware overlay issues.
  * - Respects prefers-reduced-motion by rendering the static transparent poster.
- * - Graceful fallback if video fails to load or play.
  * - Non-blocking: application readiness is completely decoupled from video playback.
  */
 export function AppLoadingScreen({
@@ -26,10 +30,12 @@ export function AppLoadingScreen({
 }: AppLoadingScreenProps) {
   const [videoError, setVideoError] = React.useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false);
+  const [useImageAnimation, setUseImageAnimation] = React.useState(false);
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
+      // 1. Check prefers-reduced-motion
       const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
       setPrefersReducedMotion(mediaQuery.matches);
 
@@ -38,6 +44,24 @@ export function AppLoadingScreen({
       };
 
       mediaQuery.addEventListener("change", handleChange);
+
+      // 2. Mobile & Safari Alpha Transparency Support Detection:
+      // iOS WebKit and macOS Safari do not support WebM alpha channels (rendering black background).
+      // Many mobile Android MediaCodec decoders also force opaque black surfaces on <video>.
+      // We route mobile and Safari users to the native transparent animated WebP.
+      const ua = navigator.userAgent || "";
+      const isMobileDevice =
+        /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
+        window.innerWidth < 768 ||
+        (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+      const isSafari =
+        /Safari/i.test(ua) && !/Chrome|CriOS|FxiOS|Android/i.test(ua);
+      const isIOS = /iPhone|iPad|iPod/.test(ua);
+
+      if (isMobileDevice || isSafari || isIOS) {
+        setUseImageAnimation(true);
+      }
+
       return () => mediaQuery.removeEventListener("change", handleChange);
     }
   }, []);
@@ -64,26 +88,55 @@ export function AppLoadingScreen({
           <div className="absolute -bottom-2 w-44 h-8 rounded-full bg-[#E8DECDB0]/60 blur-md -z-10" />
 
           {/* Cat Mascot Animation / Poster */}
-          {prefersReducedMotion || videoError ? (
+          {prefersReducedMotion ? (
+            /* Reduced Motion: Static Transparent Poster */
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src="/animations/loading_main_poster.png"
               alt="SyncShelf Mascot"
-              className="w-48 h-52 sm:w-56 sm:h-60 object-contain drop-shadow-sm select-none"
+              className="w-48 h-52 sm:w-56 sm:h-60 object-contain drop-shadow-sm select-none bg-transparent"
+              style={{ backgroundColor: "transparent" }}
             />
           ) : (
-            <video
-              ref={videoRef}
-              src="/animations/loading_main.webm"
-              poster="/animations/loading_main_poster.png"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-              onError={() => setVideoError(true)}
-              className="w-48 h-52 sm:w-56 sm:h-60 object-contain drop-shadow-sm select-none"
-            />
+            <>
+              {/*
+                Mobile & Safari: Animated WebP with 100% native alpha transparency.
+                Uses responsive CSS (`block md:hidden`) so on any mobile viewport width,
+                it renders immediately even before JavaScript hydration with NO black box.
+                Also rendered on desktop if WebM encounters an error or browser is Safari.
+              */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/animations/loading_main.webp"
+                alt="SyncShelf Mascot"
+                className={cn(
+                  "w-48 h-52 sm:w-56 sm:h-60 object-contain drop-shadow-sm select-none bg-transparent",
+                  useImageAnimation || videoError ? "block" : "block md:hidden"
+                )}
+                style={{ backgroundColor: "transparent" }}
+              />
+
+              {/*
+                Desktop Chrome/Firefox/Edge: Plays the original WebM video.
+                Hidden on mobile via `hidden md:block`.
+                If video fails or browser is Safari, this is unmounted in favor of the animated WebP.
+              */}
+              {!(useImageAnimation || videoError) && (
+                <video
+                  ref={videoRef}
+                  src="/animations/loading_main.webm"
+                  poster="/animations/loading_main_poster.png"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  onError={() => setVideoError(true)}
+                  className="hidden md:block w-48 h-52 sm:w-56 sm:h-60 object-contain drop-shadow-sm select-none bg-transparent"
+                  style={{ backgroundColor: "transparent" }}
+                />
+              )}
+            </>
           )}
         </div>
 
