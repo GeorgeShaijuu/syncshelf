@@ -94,13 +94,13 @@ export function AppLoadingScreen({
             <img
               src="/animations/loading_main_poster.png"
               alt="SyncShelf Mascot"
-              className="w-48 h-52 sm:w-56 sm:h-60 object-contain drop-shadow-sm select-none bg-transparent"
+              className="w-48 h-52 sm:w-56 sm:h-60 object-contain select-none bg-transparent"
               style={{ backgroundColor: "transparent" }}
             />
           ) : (
             <>
               {/*
-                Mobile & Safari: Animated WebP with 100% native alpha transparency.
+                Mobile & Safari: Animated WebP with 100% native alpha transparency and background disposal.
                 Uses responsive CSS (`block md:hidden`) so on any mobile viewport width,
                 it renders immediately even before JavaScript hydration with NO black box.
                 Also rendered on desktop if WebM encounters an error or browser is Safari.
@@ -110,7 +110,7 @@ export function AppLoadingScreen({
                 src="/animations/loading_main.webp"
                 alt="SyncShelf Mascot"
                 className={cn(
-                  "w-48 h-52 sm:w-56 sm:h-60 object-contain drop-shadow-sm select-none bg-transparent",
+                  "w-48 h-52 sm:w-56 sm:h-60 object-contain select-none bg-transparent",
                   useImageAnimation || videoError ? "block" : "block md:hidden"
                 )}
                 style={{ backgroundColor: "transparent" }}
@@ -132,7 +132,7 @@ export function AppLoadingScreen({
                   playsInline
                   preload="auto"
                   onError={() => setVideoError(true)}
-                  className="hidden md:block w-48 h-52 sm:w-56 sm:h-60 object-contain drop-shadow-sm select-none bg-transparent"
+                  className="hidden md:block w-48 h-52 sm:w-56 sm:h-60 object-contain select-none bg-transparent"
                   style={{ backgroundColor: "transparent" }}
                 />
               )}
