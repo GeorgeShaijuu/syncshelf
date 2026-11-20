@@ -90,7 +90,7 @@ export function SharesComingSoonView() {
 
         {/* Action Buttons */}
         <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link href="/">
+          <Link href="/board">
             <Button size="sm" className="gap-2 text-xs font-medium">
               <Layers className="h-3.5 w-3.5" />
               <span>Return to All Items</span>

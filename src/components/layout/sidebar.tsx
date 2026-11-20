@@ -45,7 +45,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
 
   const navItems = [
     { id: "spaces", label: "Spaces", icon: Compass, href: "/spaces" },
-    { id: "all", label: "My Board", icon: LayoutGrid, href: activeWorkspace ? "/" : "/spaces" },
+    { id: "all", label: "My Board", icon: LayoutGrid, href: activeWorkspace ? "/board" : "/spaces" },
     { id: "calendar", label: "Calendar", icon: Calendar, href: "/calendar" },
     { id: "pinned", label: "Pinned", icon: Pin, href: "/pinned" },
     { id: "shares", label: "Shared Links", icon: Share2, href: "/shared" },
@@ -54,13 +54,13 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
   ];
 
   const typeFilters = [
-    { id: "text", label: "Text", icon: FileText, href: "/?type=text" },
-    { id: "code", label: "Code", icon: Code2, href: "/?type=code" },
-    { id: "link", label: "Links", icon: Link2, href: "/?type=link" },
-    { id: "image", label: "Images", icon: ImageIcon, href: "/?type=image" },
-    { id: "audio", label: "Audio", icon: Music, href: "/?type=audio" },
-    { id: "video", label: "Video", icon: Video, href: "/?type=video" },
-    { id: "file", label: "Files", icon: FileBox, href: "/?type=file" },
+    { id: "text", label: "Text", icon: FileText, href: "/board?type=text" },
+    { id: "code", label: "Code", icon: Code2, href: "/board?type=code" },
+    { id: "link", label: "Links", icon: Link2, href: "/board?type=link" },
+    { id: "image", label: "Images", icon: ImageIcon, href: "/board?type=image" },
+    { id: "audio", label: "Audio", icon: Music, href: "/board?type=audio" },
+    { id: "video", label: "Video", icon: Video, href: "/board?type=video" },
+    { id: "file", label: "Files", icon: FileBox, href: "/board?type=file" },
   ];
 
   const displayName = user?.displayName || user?.email?.split("@")[0] || "Team Member";
@@ -74,7 +74,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       return pathname === "/spaces";
     }
     if (id === "all") {
-      return pathname === "/" && !typeParam;
+      return pathname === "/board" && !typeParam;
     }
     if (id === "calendar") {
       return pathname === "/calendar";
@@ -95,7 +95,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
   };
 
   const isTypeActive = (typeId: string) => {
-    return pathname === "/" && typeParam === typeId;
+    return pathname === "/board" && typeParam === typeId;
   };
 
   return (
@@ -108,7 +108,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       {/* Brand & Version Badge */}
       <div className="flex h-14 items-center justify-between border-b border-border px-4 shrink-0">
         <Link
-          href="/"
+          href="/spaces"
           onClick={onNavigate}
           className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground"
         >

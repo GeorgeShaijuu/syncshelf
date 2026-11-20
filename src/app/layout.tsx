@@ -5,9 +5,9 @@ import { WorkspaceProvider } from "@/features/workspaces/workspace-context";
 import { SmoothScrollProvider } from "@/components/providers/smooth-scroll-provider";
 
 export const metadata: Metadata = {
-  title: "SyncShelf — Universal Shared Clipboard Board",
+  title: "SyncShelf — Capture, organise, and share your ideas in sync",
   description:
-    "Fast, searchable universal clipboard board for teams and individuals. Copy, paste, and organize anything instantly.",
+    "A collaborative content hub. Keep your text, code, links, images and files in one visual workspace — with real-time collaboration and a built-in calendar.",
 };
 
 export default function RootLayout({

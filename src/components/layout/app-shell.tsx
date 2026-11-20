@@ -27,7 +27,7 @@ export function AppShell({
   const { activeWorkspace } = useWorkspace();
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  const isFullScreenView = pathname === "/" || pathname === "/calendar";
+  const isFullScreenView = pathname === "/" || pathname === "/board" || pathname === "/calendar";
 
   const handleTriggerUpload = () => {
     fileInputRef.current?.click();

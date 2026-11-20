@@ -72,8 +72,8 @@ export function FloatingToolbar({
     {
       label: "Board Canvas",
       icon: Layers,
-      href: "/",
-      isActive: pathname === "/",
+      href: "/board",
+      isActive: pathname === "/board",
     },
     {
       label: "Team Members",
@@ -183,9 +183,10 @@ export function FloatingToolbar({
 
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 setProfileOpen(false);
-                signOut();
+                await signOut();
+                window.location.href = "/";
               }}
               className="flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs text-[#E84B35] hover:bg-[#FFEBE8] transition-colors font-medium cursor-pointer active:scale-95"
             >

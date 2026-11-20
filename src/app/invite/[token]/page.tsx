@@ -104,7 +104,7 @@ export default function InvitePage() {
 
       // Redirect to home feed after brief confirmation
       setTimeout(() => {
-        router.push("/");
+        router.push("/spaces");
       }, 1200);
     } catch (err: any) {
       setError(err.message || "Failed to accept invitation");
@@ -143,7 +143,7 @@ export default function InvitePage() {
               <h2 className="text-base font-semibold text-foreground">Invitation Invalid</h2>
               <p className="text-xs text-muted-foreground mt-1">{error}</p>
             </div>
-            <Link href="/" className="inline-block pt-2">
+            <Link href="/spaces" className="inline-block pt-2">
               <Button variant="outline" size="sm" className="text-xs">
                 Back to SyncShelf
               </Button>

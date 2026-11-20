@@ -16,7 +16,7 @@ import { getAuthHeaders } from "@/features/auth/auth-helpers";
 import { uploadFileToR2 } from "@/features/clipboard/r2-upload-client";
 import { ClipboardItem } from "@/lib/validation/item";
 
-export default function DashboardHomePage() {
+export default function BoardCanvasPage() {
   const { activeWorkspace } = useWorkspace();
 
   const workspaceId = activeWorkspace?.id || "";

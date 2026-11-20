@@ -226,7 +226,7 @@ export default function SpacesCollectionPage() {
                   <span>Calendar</span>
                 </ClayButton>
               </Link>
-              <Link href="/">
+              <Link href="/board">
                 <ClayButton variant="primary" size="md">
                   <span>Open Board</span>
                   <ArrowRight className="h-3.5 w-3.5" />

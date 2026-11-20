@@ -126,7 +126,7 @@ export function BoardTopNav({ syncState = "live", lastSyncedAt }: BoardTopNavPro
       {/* Left: Logo + Search Field */}
       <div className="flex items-center gap-6 flex-1 max-w-xl">
         {/* 1. SyncShelf Logo */}
-        <Link href="/" className="shrink-0 group flex items-center gap-2">
+        <Link href="/spaces" className="shrink-0 group flex items-center gap-2">
           <span className="text-xl font-bold tracking-tight text-[#24211F] font-sans group-hover:opacity-85 transition-opacity">
             syncshelf
           </span>
