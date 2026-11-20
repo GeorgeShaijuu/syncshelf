@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run tests/permissions.test.ts tests/token-verification.test.ts tests/workspace-rules.test.ts tests/items-api.test.ts tests/realtime-hook.test.ts tests/r2-uploads.test.ts tests/team-invitations.test.ts tests/anonymous-sharing.test.ts tests/redis-rate-limiter.test.ts tests/e2e-multi-user.test.ts tests/content-detection.test.ts tests/paste-interaction.test.ts tests/card-action-menu.test.ts",
+    "test": "vitest run tests/permissions.test.ts tests/token-verification.test.ts tests/workspace-rules.test.ts tests/items-api.test.ts tests/realtime-hook.test.ts tests/realtime-collaboration.test.ts tests/r2-uploads.test.ts tests/team-invitations.test.ts tests/anonymous-sharing.test.ts tests/redis-rate-limiter.test.ts tests/e2e-multi-user.test.ts tests/content-detection.test.ts tests/paste-interaction.test.ts tests/card-action-menu.test.ts",
     "test:rules": "node scripts/run-rules-tests.mjs",
     "test:r2": "vitest run tests/r2-cors-integration.test.ts",
     "test:all": "npm test && npm run test:rules"

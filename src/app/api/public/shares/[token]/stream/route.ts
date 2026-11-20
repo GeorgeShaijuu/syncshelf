@@ -82,7 +82,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         }
       };
 
-      // 1. Heartbeat timer every 25 seconds
+      // 1. Heartbeat timer every 15 seconds to prevent browser/proxy timeouts
       const heartbeatInterval = setInterval(() => {
         if (isClosed) return;
         try {
@@ -90,7 +90,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         } catch {
           clearInterval(heartbeatInterval);
         }
-      }, 25000);
+      }, 15000);
 
       // 2. Share document listener (for immediate revocation or expiration)
       const unsubShare = shareRef.onSnapshot(

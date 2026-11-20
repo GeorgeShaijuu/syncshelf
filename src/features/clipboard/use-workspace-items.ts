@@ -44,8 +44,10 @@ export interface UseWorkspaceItemsResult {
   hasMore: boolean;
   isLoadingMore: boolean;
   lastSyncedAt: Date | null;
+  isFromCache: boolean;
+  hasPendingWrites: boolean;
   loadMore: () => Promise<void>;
-  refresh: () => Promise<void>;
+  refresh: (opts?: { silent?: boolean }) => Promise<void>;
   optimisticPinToggle: (item: ClipboardItem) => Promise<void>;
   optimisticItemCreated: (newItem: ClipboardItem) => void;
   optimisticItemUpdated: (updatedItem: ClipboardItem) => void;
@@ -149,17 +151,23 @@ export function useWorkspaceItems({
   const [connectionState, setConnectionState] = React.useState<ConnectionState>("connecting");
   const [error, setError] = React.useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
+  const [isFromCache, setIsFromCache] = React.useState(false);
+  const [hasPendingWrites, setHasPendingWrites] = React.useState(false);
+  const [reconnectEpoch, setReconnectEpoch] = React.useState(0);
 
   // Pagination states
   const [hasMore, setHasMore] = React.useState(true);
   const [isLoadingMore, setIsLoadingMore] = React.useState(false);
   const [nextCursor, setNextCursor] = React.useState<string | null>(null);
 
-  // Keep ref of maps for stable access in callbacks
+  // Keep ref of maps and timestamps for stable access in callbacks
   const realtimeMapRef = React.useRef(realtimeMap);
   realtimeMapRef.current = realtimeMap;
   const paginatedMapRef = React.useRef(paginatedMap);
   paginatedMapRef.current = paginatedMap;
+  const lastConfirmedServerSyncRef = React.useRef<number>(Date.now());
+  const connectionStateRef = React.useRef(connectionState);
+  connectionStateRef.current = connectionState;
 
   // Clear paginated items and reset cursor when filterType changes
   React.useEffect(() => {
@@ -168,10 +176,65 @@ export function useWorkspaceItems({
     setHasMore(true);
   }, [filterType, workspaceId]);
 
+  // Full Refresh Trigger
+  const refresh = React.useCallback(
+    async (opts?: { silent?: boolean }) => {
+      const isSilent = opts?.silent ?? false;
+      if (!isSilent) {
+        setLoading(true);
+      }
+      setError(null);
+      try {
+        const headers = await getAuthHeaders();
+        const params = new URLSearchParams();
+        params.set("limit", String(pageSize));
+        if (filterType !== "all" && filterType !== "pinned") {
+          params.set("type", filterType);
+        } else if (filterType === "pinned") {
+          params.set("pinned", "true");
+        }
+        if (searchQuery.trim()) {
+          params.set("search", searchQuery.trim());
+        }
+
+        const res = await fetch(
+          `/api/workspaces/${workspaceId}/items?${params.toString()}`,
+          { headers }
+        );
+        const data = await res.json();
+        if (res.ok && data.items) {
+          const freshMap = new Map<string, ClipboardItem>();
+          for (const item of data.items) {
+            freshMap.set(item.id, item);
+          }
+          setRealtimeMap(freshMap);
+          setPaginatedMap(new Map());
+          setNextCursor(data.nextCursor || null);
+          setHasMore(Boolean(data.hasMore));
+          setLastSyncedAt(new Date());
+          lastConfirmedServerSyncRef.current = Date.now();
+          setConnectionState("live");
+          setIsFromCache(false);
+        }
+      } catch (err: any) {
+        if (!isSilent) {
+          setError(err.message || "Failed to refresh items");
+        }
+      } finally {
+        if (!isSilent) {
+          setLoading(false);
+        }
+      }
+    },
+    [workspaceId, pageSize, filterType, searchQuery]
+  );
+
   // Online / Offline network status listeners
   React.useEffect(() => {
     const handleOnline = () => {
-      setConnectionState((prev) => (prev === "offline" ? "reconnecting" : prev));
+      setConnectionState("reconnecting");
+      refresh({ silent: true }).catch(() => {});
+      setReconnectEpoch((e) => e + 1);
     };
     const handleOffline = () => {
       setConnectionState("offline");
@@ -188,7 +251,42 @@ export function useWorkspaceItems({
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, []);
+  }, [refresh]);
+
+  // Tab Visibility & Background Recovery Listener (Critical for catching up inactive tabs)
+  React.useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible") {
+        const timeSinceServerSync = Date.now() - lastConfirmedServerSyncRef.current;
+
+        // If tab was inactive/hidden and > 20s elapsed, or in non-live state:
+        if (
+          timeSinceServerSync > 20000 ||
+          connectionState === "offline" ||
+          connectionState === "reconnecting" ||
+          connectionState === "error"
+        ) {
+          if (navigator.onLine && workspaceId) {
+            try {
+              // Perform non-flickering silent refresh to catch up immediately without waiting
+              await refresh({ silent: true });
+            } catch (err) {
+              console.warn("[SyncShelf Realtime] Tab focus recovery refresh notice:", err);
+            }
+
+            if (connectionState === "error" || connectionState === "reconnecting") {
+              setReconnectEpoch((e) => e + 1);
+            }
+          }
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [connectionState, workspaceId, refresh]);
 
   // Primary Firestore Realtime Listener
   React.useEffect(() => {
@@ -196,7 +294,7 @@ export function useWorkspaceItems({
     let unsubscribe: Unsubscribe | null = null;
 
     // Security & Context Validation:
-    // Only subscribe if user is authenticated and workspace matches active context
+    // Only subscribe if user is authenticated
     if (!isAuthenticated || !user) {
       setConnectionState("offline");
       setLoading(false);
@@ -209,13 +307,6 @@ export function useWorkspaceItems({
       setError(null);
       setLoading(false);
       setRealtimeMap(new Map());
-      return;
-    }
-
-    if (activeWorkspaceId && activeWorkspaceId !== workspaceId) {
-      setConnectionState("error");
-      setError("Active workspace context mismatch");
-      setLoading(false);
       return;
     }
 
@@ -248,8 +339,23 @@ export function useWorkspaceItems({
 
     unsubscribe = onSnapshot(
       q,
+      { includeMetadataChanges: true },
       (snapshot) => {
         if (!isMounted) return;
+
+        const fromCache = snapshot.metadata.fromCache;
+        const pendingWrites = snapshot.metadata.hasPendingWrites;
+        setIsFromCache(fromCache);
+        setHasPendingWrites(pendingWrites);
+
+        if (!fromCache) {
+          lastConfirmedServerSyncRef.current = Date.now();
+          setConnectionState("live");
+          setLastSyncedAt(new Date());
+        } else if (connectionStateRef.current === "connecting") {
+          // Cached data available during initial connection
+          setLoading(false);
+        }
 
         const currentRealtimeMap = new Map<string, ClipboardItem>();
         const incomingDocs = snapshot.docs;
@@ -318,8 +424,9 @@ export function useWorkspaceItems({
 
         setRealtimeMap(currentRealtimeMap);
         setLoading(false);
-        setConnectionState("live");
-        setLastSyncedAt(new Date());
+        if (!fromCache) {
+          setConnectionState("live");
+        }
 
         // Update cursor for pagination based on the oldest document in the realtime window
         if (incomingDocs.length > 0) {
@@ -338,6 +445,13 @@ export function useWorkspaceItems({
           setConnectionState("offline");
         } else if (snapshotError.code === "unavailable") {
           setConnectionState("reconnecting");
+          // Schedule reconnect attempt with backoff
+          setTimeout(() => {
+            if (isMounted) setReconnectEpoch((e) => e + 1);
+          }, 3000);
+        } else if (snapshotError.code === "permission-denied") {
+          setConnectionState("error");
+          setError("Access permission denied to this workspace");
         } else {
           setConnectionState("error");
           setError(snapshotError.message || "Realtime listener error");
@@ -353,7 +467,7 @@ export function useWorkspaceItems({
         unsubscribe = null;
       }
     };
-  }, [workspaceId, activeWorkspaceId, isAuthenticated, user, filterType, pageSize]);
+  }, [workspaceId, isAuthenticated, user, filterType, pageSize, reconnectEpoch]);
 
   // Merge realtime and paginated older items
   const mergedItems = React.useMemo(() => {
@@ -432,45 +546,6 @@ export function useWorkspaceItems({
       setIsLoadingMore(false);
     }
   }, [isLoadingMore, hasMore, mergedItems, nextCursor, pageSize, filterType, searchQuery, workspaceId]);
-
-  // Full Refresh Trigger
-  const refresh = React.useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const headers = await getAuthHeaders();
-      const params = new URLSearchParams();
-      params.set("limit", String(pageSize));
-      if (filterType !== "all" && filterType !== "pinned") {
-        params.set("type", filterType);
-      } else if (filterType === "pinned") {
-        params.set("pinned", "true");
-      }
-      if (searchQuery.trim()) {
-        params.set("search", searchQuery.trim());
-      }
-
-      const res = await fetch(
-        `/api/workspaces/${workspaceId}/items?${params.toString()}`,
-        { headers }
-      );
-      const data = await res.json();
-      if (res.ok && data.items) {
-        const freshMap = new Map<string, ClipboardItem>();
-        for (const item of data.items) {
-          freshMap.set(item.id, item);
-        }
-        setRealtimeMap(freshMap);
-        setPaginatedMap(new Map());
-        setNextCursor(data.nextCursor || null);
-        setHasMore(Boolean(data.hasMore));
-      }
-    } catch (err: any) {
-      setError(err.message || "Failed to refresh items");
-    } finally {
-      setLoading(false);
-    }
-  }, [workspaceId, pageSize, filterType, searchQuery]);
 
   // Optimistic Pin Toggle
   const optimisticPinToggle = React.useCallback(
@@ -611,6 +686,8 @@ export function useWorkspaceItems({
     hasMore,
     isLoadingMore,
     lastSyncedAt,
+    isFromCache,
+    hasPendingWrites,
     loadMore,
     refresh,
     optimisticPinToggle,

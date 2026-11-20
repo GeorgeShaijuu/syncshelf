@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Search,
   Hand,
@@ -16,6 +17,8 @@ import {
 } from "lucide-react";
 import { useWorkspace } from "@/features/workspaces/workspace-context";
 import { useBoard } from "@/features/clipboard/board/board-context";
+import { useMultiplayerPresence } from "@/features/presence/use-multiplayer-presence";
+import { CollaboratorAvatarStack } from "@/features/presence/collaborator-avatar-stack";
 import { cn } from "@/lib/utils";
 
 interface BoardTopNavProps {
@@ -24,7 +27,14 @@ interface BoardTopNavProps {
 }
 
 export function BoardTopNav({ syncState = "live", lastSyncedAt }: BoardTopNavProps) {
+  const pathname = usePathname();
   const { workspaces, activeWorkspace, selectWorkspace } = useWorkspace();
+  const currentView: "board" | "calendar" = pathname === "/calendar" ? "calendar" : "board";
+  const { otherCollaborators } = useMultiplayerPresence({
+    workspaceId: activeWorkspace?.id,
+    view: currentView,
+  });
+
   const {
     searchQuery,
     setSearchQuery,
@@ -213,8 +223,10 @@ export function BoardTopNav({ syncState = "live", lastSyncedAt }: BoardTopNavPro
         </div>
       </div>
 
-      {/* Far Right: Spaces Link and Workspace Selector */}
-      <div className="flex items-center gap-2 shrink-0">
+      {/* Far Right: Collaborators Avatar Stack, Spaces Link and Workspace Selector */}
+      <div className="flex items-center gap-2.5 shrink-0">
+        <CollaboratorAvatarStack collaborators={otherCollaborators} />
+
         <Link href="/spaces" title="Spaces Collection">
           <button
             type="button"

@@ -49,6 +49,8 @@ import { BoardProvider, useBoard } from "@/features/clipboard/board/board-contex
 import { CalendarView } from "@/features/calendar/calendar-view";
 import { QuickCaptureModal } from "@/features/clipboard/quick-capture-modal";
 import { Workspace } from "@/features/workspaces/workspace-context";
+import { useMultiplayerPresence } from "@/features/presence/use-multiplayer-presence";
+import { CollaboratorAvatarStack } from "@/features/presence/collaborator-avatar-stack";
 import { cn } from "@/lib/utils";
 
 interface PublicShareClientViewProps {
@@ -66,6 +68,12 @@ export function PublicShareClientView({ token }: PublicShareClientViewProps) {
   const [items, setItems] = React.useState<ClipboardItem[]>([]);
   const [activeTab, setActiveTab] = React.useState<"board" | "calendar">("board");
   const [searchFilter, setSearchFilter] = React.useState("");
+
+  // Realtime multiplayer presence for active collaborators
+  const { otherCollaborators } = useMultiplayerPresence({
+    shareToken: token,
+    view: activeTab,
+  });
 
   // Editor creation modal state
   const [quickCaptureOpen, setQuickCaptureOpen] = React.useState(false);
@@ -184,14 +192,58 @@ export function PublicShareClientView({ token }: PublicShareClientViewProps) {
     };
   }, [token, user, mapPublicToInternal]);
 
-  // 2. Real-Time Collaboration via SSE Stream
+  // 2. Real-Time Collaboration via Resilient SSE Stream with Auto-Reconnect & Visibility Recovery
   React.useEffect(() => {
     if (!shareMetadata || errorStatus) return;
 
     let isSubscribed = true;
-    const controller = new AbortController();
+    let currentController: AbortController | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let watchdogInterval: NodeJS.Timeout | null = null;
+    let retryCount = 0;
+    const lastEventTimeRef = { current: Date.now() };
 
-    async function setupStream() {
+    // Background catch-up fetch to instantly refresh items without full page reload
+    const catchUpShareItems = async () => {
+      try {
+        const authHeaders = await getAuthHeaders();
+        const res = await fetch(`/api/public/shares/${encodeURIComponent(token)}`, {
+          headers: {
+            ...authHeaders,
+            Accept: "application/json",
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.items) {
+            const mapped = data.items.map((it: PublicClipboardItem) =>
+              mapPublicToInternal(it, data.share.id)
+            );
+            setItems(mapped);
+          }
+          lastEventTimeRef.current = Date.now();
+        } else if (res.status === 410) {
+          const errData = await res.json().catch(() => ({}));
+          setErrorStatus(errData.status === "expired" ? "expired" : "revoked");
+          setErrorMessage(errData.error || "This share link is no longer active.");
+        }
+      } catch (err) {
+        console.warn("[Shared CatchUp] Silent refresh notice:", err);
+      }
+    };
+
+    async function connectStream() {
+      if (!isSubscribed) return;
+
+      if (currentController) {
+        try {
+          currentController.abort();
+        } catch {}
+      }
+
+      const controller = new AbortController();
+      currentController = controller;
+
       try {
         const authHeaders = await getAuthHeaders();
         const response = await fetch(
@@ -206,8 +258,19 @@ export function PublicShareClientView({ token }: PublicShareClientViewProps) {
         );
 
         if (!response.ok || !response.body) {
+          if (response.status === 410) {
+            const errData = await response.json().catch(() => ({}));
+            setErrorStatus(errData.status === "expired" ? "expired" : "revoked");
+            setErrorMessage(errData.error || "Share link expired or revoked.");
+            return;
+          }
+          scheduleReconnect();
           return;
         }
+
+        // Successfully opened stream: reset retry counter
+        retryCount = 0;
+        lastEventTimeRef.current = Date.now();
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -217,12 +280,19 @@ export function PublicShareClientView({ token }: PublicShareClientViewProps) {
           const { done, value } = await reader.read();
           if (done) break;
 
+          lastEventTimeRef.current = Date.now();
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split("\n\n");
           buffer = lines.pop() || "";
 
           for (const block of lines) {
-            if (!block.trim() || block.startsWith(":")) continue;
+            if (!block.trim()) continue;
+
+            // Heartbeat comments
+            if (block.startsWith(":")) {
+              lastEventTimeRef.current = Date.now();
+              continue;
+            }
 
             const eventMatch = block.match(/^event:\s*(.+)$/m);
             const dataMatch = block.match(/^data:\s*(.+)$/m);
@@ -252,7 +322,9 @@ export function PublicShareClientView({ token }: PublicShareClientViewProps) {
               if (data.item) {
                 const newItem = mapPublicToInternal(data.item, shareMetadata?.id || "shared");
                 setItems((prev) => {
-                  if (prev.some((it) => it.id === newItem.id)) return prev;
+                  if (prev.some((it) => it.id === newItem.id)) {
+                    return prev.map((it) => (it.id === newItem.id ? newItem : it));
+                  }
                   return [newItem, ...prev];
                 });
               }
@@ -275,13 +347,71 @@ export function PublicShareClientView({ token }: PublicShareClientViewProps) {
           console.error("[Shared Stream Error]", err);
         }
       }
+
+      // Stream loop finished or threw: schedule reconnect if still subscribed
+      if (isSubscribed) {
+        scheduleReconnect();
+      }
     }
 
-    setupStream();
+    function scheduleReconnect() {
+      if (!isSubscribed) return;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+
+      const delay = Math.min(1000 * Math.pow(1.5, retryCount), 10000);
+      retryCount++;
+      reconnectTimeout = setTimeout(() => {
+        if (isSubscribed) {
+          connectStream();
+        }
+      }, delay);
+    }
+
+    // Initial stream connection
+    connectStream();
+
+    // Watchdog timer: checks every 15s if stream stalled (>35s without event or heartbeat)
+    watchdogInterval = setInterval(() => {
+      if (!isSubscribed) return;
+      const elapsed = Date.now() - lastEventTimeRef.current;
+      if (elapsed > 35000 && navigator.onLine) {
+        console.warn("[Shared Stream Watchdog] Stalled connection detected, reconnecting...");
+        catchUpShareItems();
+        connectStream();
+      }
+    }, 15000);
+
+    // Tab visibility recovery handler: when tab becomes visible, instantly catch up items and reconnect
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        const elapsed = Date.now() - lastEventTimeRef.current;
+        if (elapsed > 20000 || !navigator.onLine) {
+          catchUpShareItems();
+          connectStream();
+        }
+      }
+    };
+
+    // Online / Offline recovery
+    const handleOnline = () => {
+      catchUpShareItems();
+      connectStream();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("online", handleOnline);
 
     return () => {
       isSubscribed = false;
-      controller.abort();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("online", handleOnline);
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (watchdogInterval) clearInterval(watchdogInterval);
+      if (currentController) {
+        try {
+          currentController.abort();
+        } catch {}
+      }
     };
   }, [shareMetadata, errorStatus, token, mapPublicToInternal]);
 
@@ -653,6 +783,7 @@ export function PublicShareClientView({ token }: PublicShareClientViewProps) {
 
           {/* Right Controls */}
           <div className="flex items-center gap-2.5">
+            <CollaboratorAvatarStack collaborators={otherCollaborators} />
             {shareMetadata && (
               <span
                 className={cn(
